@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title></title>
+<style>
+*{
+	margin: 0;
+	padding: 0;
+	font-family: "微软雅黑";
+}
+body{
+	background: #2f2a78;
+	overflow: hidden;
+}	
+.warp{
+	width:101px;
+	height: 387px;
+	background: #fff;
+	margin: 200px auto;
+}
+#box{
+	width:88px;
+	height: 387px;
+	float:left;
+	overflow: hidden;
+	position: relative;
+}
+#div1{
+	width:13px;
+	height: 387px;
+	float: right;
+	position:relative;
+	background: #ccc;
+}
+#div3{
+	width:9px;
+	height:72px;
+	background:url(bg.png) 0px -12px no-repeat;
+	position: absolute;
+	top:0;
+	left: 2px;
+}
+#div2{
+	width:13px;
+	height: 367px;
+	margin-top: 10px;
+	position: relative;
+}
+#top{
+	width:11px;
+	height: 10px;
+	background:url(bg.png) 0 0 no-repeat;
+	position: absolute;
+	top:0;
+	left:1px;
+}
+#bottom{
+	width:11px;
+	height: 10px;
+	background:url(bg.png) -12px 0 no-repeat;
+	position: absolute;
+	bottom:0;
+	left:1px;
+}
+#ul{
+	list-style: none;
+	width:88px;
+	position: absolute;
+	top:0;
+}
+li{
+	height: 30px;
+	line-height: 30px;
+	text-align: center;
+}
+</style>
+</head>
+<body>
+	<section class="warp">
+		<div id="box">
+			<ul id="ul">
+				<!-- <li>北京</li>
+				<li>北京</li>
+				<li>北京</li>
+				<li>北京</li>
+				<li>北京</li> -->
+			</ul>
+		</div>
+		<div id="div1">
+			<div id="top"></div>
+			<div id="div2">
+				<div id="div3"></div>
+			</div>
+			<div id="bottom"></div>
+		</div>
+	</section>
+<script src="data.js" type="text/javascript" charset="utf-8"></script>
+<script>
+	
+	//获取元素
+	var ul = document.getElementById('ul');//ul
+	var div1 = document.getElementById('div1');//滚动条框
+	var div2 = document.getElementById('div2');//滚动条可以滚动的框
+	var div3 = document.getElementById('div3');//滚动条
+
+	arrCity.forEach(function(e,i){ //循环数组，  ，，i是数组下标
+		if(i != 0){
+			//e == arrCity[i]
+			ul.innerHTML += '<li>'+e.name+'</li>';
+		}
+	});
+	
+	//拖拽滚动条
+	div3.onmousedown = function(ev){//在滚动条上按下鼠标时
+		//滚动框到可视区的距离
+		var disY = ev.clientY - div3.offsetTop;
+				
+		document.onmousemove = function(ev){
+			//创建变量t设置拖拽到的位置
+			var t = ev.clientY - disY;
+			move(t); //移动函数
+		}
+		document.onmouseup = function(){ //鼠标抬起时清除抬起和移动事件
+			document.onmouseup = document.onmousemove = null;
+		}
+		return false;//阻止默认样式
+	};
+
+	//滚轮
+	addWeel(box,function(o){//执行滚轮函数//
+		//回调时执行
+		// var滚动的距离t
+		var t = div3.offsetTop;
+		if(o){
+			//向上滚动
+			//--
+			t -= 5;
+			move(t);//执行移动函数
+		}else{
+			//向下滚动
+			//++
+			t += 5;
+			//执行移动函数
+			move(t);
+		}
+	});
+
+	//点击
+	var timer = null;//创建timer
+	div1.onmousedown = function(ev){
+		timer = setInterval(function(){
+			//创建t滚动条滚动距离
+			var t = div3.offsetTop;
+//			console.log(t)
+			if(ev.clientY < div3.getBoundingClientRect().top){//如果点击位置在滚动条上方时
+				t -= 5;
+				move(t);//执行移动函数
+			}else if(ev.clientY > div3.getBoundingClientRect().bottom){//如果点击位置在滚动条下方时
+				t += 5;
+				move(t);//执行移动函数
+			}else{//不满足上面条件执行
+				clearInterval(timer);//清除定时器
+			}
+		},30);
+	}
+	
+	//鼠标在滚动条框上抬起时
+	div1.onmouseup = function(ev){
+		clearInterval(timer);//清除定时器
+	}
+
+	//封装移动函数
+	function move(t){
+		if(t < 0){
+			t = 0;//滚动条距离最小为0
+		}else if(t > div2.offsetHeight - div3.offsetHeight){			
+			t = div2.offsetHeight - div3.offsetHeight;//边界处理，到最下边时
+		}
+		
+		//scale移动的比例，当前移动的距离/可以移动的距离
+		var scale = t/(div2.offsetHeight - div3.offsetHeight); 
+		//设置ul内容移动距离，整个box的高度减去ul,负数
+		ul.style.top = scale * (box.offsetHeight - ul.scrollHeight) + 'px';
+
+		//设置滚动条滚动距离
+		div3.style.top = t + 'px';
+	}
+	
+	
+	//封装滚轮滚动函数
+	function addWeel(obj,fn){
+        //FF
+        if(obj.onmousewheel === undefined){//如果是火狐则执行下面代码
+            obj.addEventListener('DOMMouseScroll',fn1);
+        }else{//其他浏览器执行下面代码
+        //Chrome
+            obj.addEventListener('mousewheel',fn1);
+        }
+        function fn1(ev){
+            var o = true;
+            if(ev.wheelDelta){ //有ev.wheelDelta时，，判断 大于0为true,否则为false
+                o = ev.wheelDelta>0 ? true : false;
+            }else{
+                o = ev.detail < 0?true : false;//判断小于0为true,否则为false
+            }
+            
+            fn && fn(o);//有fn时执行fn
+        }
+    }
+
+
+
+</script>
+</body>
+</html>
